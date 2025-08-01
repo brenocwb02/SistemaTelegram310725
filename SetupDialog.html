@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 24px;
+        color: #3c4043;
+      }
+      h2 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #202124;
+      }
+      p {
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 20px;
+        color: #5f6368;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #3c4043;
+      }
+      input[type="text"], input[type="url"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #dadce0;
+        border-radius: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+      }
+      input[type="text"]:focus, input[type="url"]:focus {
+        border-color: #1a73e8;
+        outline: none;
+      }
+      .help-text {
+        font-size: 12px;
+        color: #5f6368;
+        margin-top: 6px;
+        line-height: 1.6;
+      }
+      button {
+        background-color: #1a73e8;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 100%;
+        transition: background-color 0.2s;
+      }
+      button:hover {
+        background-color: #287ae6;
+      }
+      button:disabled {
+        background-color: #e0e0e0;
+        cursor: not-allowed;
+      }
+      #status {
+        margin-top: 20px;
+        padding: 10px;
+        border-radius: 8px;
+        display: none;
+        font-size: 14px;
+      }
+      .status-success {
+        background-color: #e6f4ea;
+        color: #1e8e3e;
+      }
+      .status-error {
+        background-color: #fce8e6;
+        color: #d93025;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Configuração Inicial do Gasto Certo</h2>
+    <p>Forneça as informações abaixo para configurar seu bot do Telegram.</p>
+
+    <div class="form-group">
+      <label for="token">Token do Bot do Telegram</label>
+      <input type="text" id="token" name="token" placeholder="123456:ABC-DEF1234ghikl-zyx57W2v1u123ew11">
+      <p class="help-text">Obtenha seu token conversando com o <a href="https://t.me/BotFather" target="_blank">@BotFather</a> no Telegram e criando um novo bot.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="chatId">Seu Chat ID de Administrador</label>
+      <input type="text" id="chatId" name="chatId" placeholder="1000505271">
+      <p class="help-text">Envie qualquer mensagem para o bot <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a> para obter seu Chat ID.</p>
+    </div>
+    
+    <!-- CAMPO DA URL ATUALIZADO COM MELHOR EXPLICAÇÃO -->
+    <div class="form-group">
+      <label for="webAppUrl">URL do App da Web (Passo Crucial)</label>
+      <input type="url" id="webAppUrl" name="webAppUrl" placeholder="https://script.google.com/macros/s/.../exec">
+      <p class="help-text">
+        Este é o endereço que conecta o Telegram à sua planilha.<br>
+        Para obtê-lo no editor de código:<br>
+        1. Clique no botão azul <b>'Implantar'</b> &gt; <b>'Gerenciar implantações'</b>.<br>
+        2. Na janela que abrir, clique na implantação existente (ou crie uma nova).<br>
+        3. Copie o link que aparece em <b>'URL do app da Web'</b>.<br>
+        4. Cole o link no campo acima.<br>
+        <b style="color: #c53929;">Atenção:</b> Nas configurações desta implantação, a opção 'Quem pode acessar' deve ser <b>'Qualquer pessoa'</b> para o bot funcionar.
+      </p>
+    </div>
+
+    <button id="submitButton" onclick="handleSetup()">Salvar e Configurar</button>
+
+    <div id="status"></div>
+
+    <script>
+      function handleSetup() {
+        const token = document.getElementById('token').value;
+        const chatId = document.getElementById('chatId').value;
+        const webAppUrl = document.getElementById('webAppUrl').value; // Obter o valor da URL
+        const submitButton = document.getElementById('submitButton');
+        const statusDiv = document.getElementById('status');
+        
+        if (!token || !chatId || !webAppUrl) {
+          showStatus("Por favor, preencha todos os campos.", "error");
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Configurando...";
+        showStatus("Aguarde, salvando informações e configurando o bot...", "info");
+
+        google.script.run
+          .withSuccessHandler(function(response) {
+            submitButton.disabled = false;
+            submitButton.textContent = "Salvar e Configurar";
+            showStatus(response, "success"); // A função saveAndSetup retorna a string de sucesso diretamente
+          })
+          .withFailureHandler(function(error) {
+            submitButton.disabled = false;
+            submitButton.textContent = "Salvar e Configurar";
+            showStatus("Erro inesperado: " + error.message, "error");
+          })
+          // Chamar a função saveAndSetup no Code.gs com os três parâmetros
+          .saveAndSetup({ token: token, chatId: chatId, webAppUrl: webAppUrl });
+      }
+
+      function showStatus(message, type) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.textContent = message;
+        statusDiv.className = type === 'success' ? 'status-success' : type === 'info' ? 'status-info' : 'status-error';
+        statusDiv.style.display = 'block';
+      }
+    </script>
+  </body>
+</html>
